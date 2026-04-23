@@ -16,45 +16,50 @@ markdown convention that agents and humans can onboard from.
 - Architecture decisions or roadmap are undocumented.
 - A new developer or agent is onboarding and the codebase has no narrative.
 
+## Tiers
+
+Doc density scales with project complexity. Pick one before writing.
+
+| Tier | When | File count |
+|------|------|------------|
+| **minimum** | scripts, small libs, WordPress themes | 4 |
+| **standard** (default) | web apps, libraries, small products | 6-8 |
+| **producto** | SaaS, multi-tenant, apps with users and revenue | 15+ |
+
+Auto-detect (first match wins):
+- **producto** if auth deps (`next-auth`, `@clerk/*`, `lucia`, `better-auth`), ORM + migrations (`prisma/schema.prisma`, `drizzle.config.*`), or multi-tenant signals.
+- **minimum** if WordPress theme, single-file tool, or shell-scripts-only.
+- **standard** otherwise.
+
+User can override with `--tier=...` or in natural language.
+
 ## Canonical file set
 
-| File | Purpose | Required |
-|------|---------|----------|
-| `README.md` | Entry point: what the project is, how to run it | Yes |
-| `CLAUDE.md` | Agent conventions, stack, dos and donts | Yes |
-| `ARCHITECTURE.md` | Domain, layers, data flow, key decisions | Yes |
-| `PLANS.md` | Roadmap: now, next, later, done | Yes |
-| `SUBAGENTS.md` | Delegation patterns, hooks, sub-agent triggers | Recommended |
-| `docs/references/*.md` | Deep dives, one file per topic | As needed |
+**minimum**: `README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `PLANS.md`.
+
+**standard**: everything in minimum + `SUBAGENTS.md`, `AGENTS.md` (optional), `docs/references/*.md`.
+
+**producto**: everything in standard + `docs/DESIGN.md`, `docs/FRONTEND.md`, `docs/PRODUCT_SENSE.md`, `docs/QUALITY_SCORE.md`, `docs/RELIABILITY.md`, `docs/SECURITY.md`, `docs/design-docs/index.md`, `docs/product-specs/index.md`, plus `docs/exec-plans/` and `docs/generated/` as needed.
 
 ## Rules
 
-1. **Narrative over hidden rules.** Markdown at the root beats opaque config.
-2. **One concern per file.** Architecture, roadmap, and conventions never mix.
-3. **Short root files, deep references.** Root files under ~200 lines.
-4. **Detect first, then write.** Read manifests before filling templates.
-5. **Update in place.** Diff before overwriting. Never silent overwrites.
-6. **Commit-friendly.** Every file must be diffable and stable.
+1. **Pick the tier first.** Detection is a suggestion — the user decides.
+2. **Narrative over hidden rules.** Markdown at the root beats opaque config.
+3. **One concern per file.** Architecture, roadmap, and conventions never mix.
+4. **Short root files, deep references.** Root files under ~200 lines.
+5. **Detect first, then write.** Read manifests before filling templates.
+6. **Update in place.** Diff before overwriting. Never silent overwrites.
+7. **Commit-friendly.** Every file must be diffable and stable.
+8. **Do not fabricate.** For producto-tier sections without real content yet, leave the template hints and mark `<!-- TODO: fill when ready -->`.
 
 ## Workflow
 
-1. **Detect stack** — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`. Extract project name, framework, and scripts.
-2. **Audit existing docs** — for each canonical file: missing → create; exists → diff against template; out of convention → propose migration.
-3. **Apply templates** — fill `{{PROJECT_NAME}}`, `{{STACK}}`, `{{RUN_COMMAND}}`, `{{TEST_COMMAND}}`, etc. Templates live in `.claude/skills/documentation/assets/templates/` after install.
-4. **Confirm** — present files to create, files to update (with diff summary), and detected values. Wait for GO.
-5. **Write atomically** — new files via Write, existing via Edit. Never batch-overwrite.
-
-## Output layout
-
-```
-project/
-├── README.md
-├── CLAUDE.md
-├── ARCHITECTURE.md
-├── PLANS.md
-├── SUBAGENTS.md
-└── docs/references/*.md
-```
+1. **Detect stack** — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`, or WordPress signals (`style.css` + `functions.php`). Extract project name, framework, and scripts.
+2. **Detect tier** — apply the heuristics above; default to `standard`.
+3. **Audit existing docs** — for each canonical file in the chosen tier: missing → create; exists → diff against template; out of convention → propose migration. Preserve higher-tier docs that already exist.
+4. **Apply templates** — fill `{{PROJECT_NAME}}`, `{{FRAMEWORK}}`, `{{RUN_COMMAND}}`, etc. Templates live in `.claude/skills/documentation/assets/templates/` after install (root templates + `docs/` subfolder for producto).
+5. **Confirm** — present detected tier, detected stack values, files to create grouped by tier, and files to update. Wait for GO.
+6. **Write atomically** — new files via Write, existing via Edit. Never batch-overwrite. Create `.gitkeep` for empty subdirectories.
 
 ## Placeholders
 

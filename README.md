@@ -11,14 +11,34 @@ Runs on Linux, macOS, and Windows via a single Node.js installer (no shell scrip
 
 ## What it generates
 
-| File | Purpose | Required |
-|------|---------|----------|
-| `README.md` | Entry point: what the project is, how to run it | Yes |
-| `CLAUDE.md` | Agent conventions, stack, dos and donts | Yes |
-| `ARCHITECTURE.md` | Domain, layers, data flow, key decisions | Yes |
-| `PLANS.md` | Roadmap: now, next, later, done | Yes |
-| `SUBAGENTS.md` | Delegation patterns, hooks, sub-agent triggers | Recommended |
-| `docs/references/*.md` | Deep dives, one file per topic | As needed |
+The skill adapts to the project via three tiers. The agent detects the tier from
+the codebase (WordPress theme → minimum, SaaS with auth + multi-tenant → producto,
+default → standard) and the user confirms or overrides before anything is written.
+
+### minimum — 4 files
+
+For scripts, small libraries, WordPress themes, one-file tools.
+
+- `README.md`, `CLAUDE.md`, `ARCHITECTURE.md`, `PLANS.md`
+
+### standard (default) — 6-8 files
+
+For web apps, libraries with tests, small products.
+
+- Everything in minimum, plus:
+- `SUBAGENTS.md`, `AGENTS.md` (optional Codex mirror), `docs/references/*.md` (as needed)
+
+### producto — 15+ files
+
+For SaaS, multi-tenant apps, products with real users and revenue.
+
+- Everything in standard, plus:
+- `docs/DESIGN.md`, `docs/FRONTEND.md`, `docs/PRODUCT_SENSE.md`
+- `docs/QUALITY_SCORE.md`, `docs/RELIABILITY.md`, `docs/SECURITY.md`
+- `docs/design-docs/index.md` (+ per-topic docs as needed)
+- `docs/product-specs/index.md` (+ per-feature specs as needed)
+- `docs/exec-plans/` (per-initiative plans)
+- `docs/generated/` (auto-generated artifacts, marked as such)
 
 ## Requirements
 
