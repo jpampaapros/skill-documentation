@@ -1,7 +1,7 @@
 <!-- documentation-skill:start -->
 ## documentation skill
 
-This project follows the gentleman-programming documentation convention: a tiered
+This project follows the apros documentation convention: a tiered
 set of narrative markdown files, scaling from minimum (4 files) to producto (15+).
 The skill supports three operations: **scaffold** (create missing docs),
 **update** (re-audit existing docs vs code), and **bundle** (concatenate all

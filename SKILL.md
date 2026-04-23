@@ -12,7 +12,7 @@ description: >
   "bundle docs", "generar documentación general", "consolidar docs".
 license: Apache-2.0
 metadata:
-  author: gentleman-programming
+  author: apros
   version: "1.1"
 ---
 

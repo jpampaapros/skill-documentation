@@ -1,5 +1,5 @@
 ---
-description: Scaffolds, updates, and bundles project documentation using the gentleman-programming convention — README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, docs/. Invoke on "document the project", "update docs", "actualizar documentación", "bundle docs", or "generar documentación general".
+description: Scaffolds, updates, and bundles project documentation using the apros convention — README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, docs/. Invoke on "document the project", "update docs", "actualizar documentación", "bundle docs", or "generar documentación general".
 globs:
 alwaysApply: false
 ---

@@ -1,6 +1,6 @@
 ---
 name: documentation-scaffold
-description: Scaffold project documentation from scratch using the gentleman-programming convention. Detects stack and tier (minimum / standard / producto), creates missing canonical files from templates, preserves existing ones.
+description: Scaffold project documentation from scratch using the apros convention. Detects stack and tier (minimum / standard / producto), creates missing canonical files from templates, preserves existing ones.
 ---
 
 # documentation-scaffold
