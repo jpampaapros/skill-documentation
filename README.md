@@ -11,33 +11,105 @@ Runs on Linux, macOS, and Windows via a single Node.js installer (no shell scrip
 
 ## Operations
 
-The skill has three operations. In Claude Code and Cursor each has its own
-**explicit slash command**; in Codex they activate by natural-language phrasing.
+The skill has three operations.
 
-| Operation | Slash command (Claude Code + Cursor) | Natural language (Codex) | What it does |
-|-----------|--------------------------------------|--------------------------|--------------|
-| **scaffold** | `/documentation-scaffold` | "documentar el proyecto", "document the project" | Creates missing docs from templates for the detected tier. |
-| **update** | `/documentation-update` | "actualizar documentación", "update docs" | Re-audits existing docs against current code, applies section-level fixes. Does NOT create new files — if a higher-tier file is missing, tells you to run scaffold. |
-| **bundle** | `/documentation-bundle` | "generar documentación general", "bundle docs" | Concatenates all canonical doc files into `DOCUMENTATION.md`. If no docs exist, offers to scaffold them first. |
+| Operation | What it does |
+|-----------|--------------|
+| **scaffold** | Creates missing docs from templates for the detected tier. |
+| **update** | Re-audits existing docs against current code, applies section-level fixes. Does NOT create new files — if a higher-tier file is missing, tells you to run scaffold. |
+| **bundle** | Concatenates all canonical doc files into `DOCUMENTATION.md`. If no docs exist, offers to scaffold them first. |
 
-### Picking a tier (cross-tool)
+See the next section for the exact syntax to invoke each operation in each tool.
 
-The **only** way to pick a tier that works identically in the three tools is
-**natural language** — mention the tier after the command (Claude Code / Cursor)
-or inside the sentence (Codex). The agent confirms in step 5 before writing.
+## Invoking the skill per tool
 
-| Tool | What works | Why |
-|------|-----------|-----|
-| **Claude Code** | `/documentation-scaffold` + then say `"usá tier minimum"` — or pass `minimum` as the first argument (`$ARGUMENTS`). | Supports `argument-hint` in frontmatter. |
-| **Cursor** | `/documentation-scaffold` + then say `"usá tier minimum"`. | Cursor slash commands do NOT have a formal argument system — only `name` + `description` + body. Trailing text is context, not an argument. |
-| **Codex** | Say it in natural language: `"documentá este proyecto como minimum"`. | Codex has no literal slash commands. |
+Each tool has its own invocation model. This is the authoritative reference —
+if a syntax isn't listed here for a given tool, it does NOT work there.
 
-Recommendation: **always use natural language for the tier**. Portable across all
-three tools, auditable in the agent's readback, and the confirm step catches any
-mismatch before writes.
+### Claude Code
 
-Do NOT rely on `/documentation-scaffold minimum` as a universal syntax — that
-only works cleanly in Claude Code.
+Claude Code supports **literal slash commands** AND natural language. The three
+commands appear in the autocomplete as soon as you type `/doc`.
+
+| Operation | Slash command | Natural language equivalent |
+|-----------|---------------|----------------------------|
+| Scaffold | `/documentation-scaffold` | "documentá este proyecto" |
+| Update | `/documentation-update` | "actualizá la documentación" |
+| Bundle | `/documentation-bundle` | "generar documentación general" |
+
+**Tier selection** — two ways:
+
+1. **Natural language override** (recommended, portable):
+   ```
+   /documentation-scaffold
+   > usá tier minimum porque es un tema WordPress
+   ```
+
+2. **Positional argument** via `$ARGUMENTS` (Claude-Code-only shortcut):
+   ```
+   /documentation-scaffold minimum
+   /documentation-scaffold producto
+   ```
+
+**Bundle with custom output path**:
+```
+/documentation-bundle docs/OVERVIEW.md
+```
+
+### Cursor
+
+Cursor supports **literal slash commands** with `name` + `description`
+frontmatter. The three commands appear in the chat autocomplete after typing
+`/doc`. There is NO formal argument system — only the command name.
+
+| Operation | Slash command | Natural language equivalent |
+|-----------|---------------|----------------------------|
+| Scaffold | `/documentation-scaffold` | "documentá este proyecto" |
+| Update | `/documentation-update` | "actualizá la documentación" |
+| Bundle | `/documentation-bundle` | "generar documentación general" |
+
+**Tier selection** — use natural language after the command. Writing
+`/documentation-scaffold minimum` appends the text to the prompt as context,
+which usually works, but it's not a formal argument binding:
+
+```
+/documentation-scaffold
+> usá tier minimum
+```
+
+### Codex
+
+**Codex does NOT support user-defined slash commands.** The documented slash
+commands (`/model`, `/clear`, `/init`, `/review`, `/status`, etc.) are all
+**built-in** by OpenAI; users cannot register their own.
+
+Trigger every operation in **natural language**. The Codex skill is installed
+at `~/.codex/skills/documentation/` and activates by matching your phrasing
+against its description (packed with English + Spanish keywords).
+
+| Operation | Example phrases |
+|-----------|-----------------|
+| Scaffold | "documentá este proyecto", "document this project", "scaffold docs" |
+| Update | "actualizá la documentación", "refresh docs", "update documentation" |
+| Bundle | "generar documentación general", "consolidar docs", "bundle all docs into one file" |
+
+**Tier selection** — include the tier word in the sentence:
+
+```
+"documentá este proyecto como minimum"
+"scaffold docs en tier producto"
+"actualizá la documentación (ya es un SaaS, standard no alcanza)"
+```
+
+### Cross-tool summary
+
+| Tool | Slash commands? | Arguments after slash? | Tier via text? |
+|------|-----------------|-----------------------|----------------|
+| **Claude Code** | ✅ yes | ✅ `$ARGUMENTS` (formal) | ✅ also works |
+| **Cursor** | ✅ yes | ⚠️ trailing text only (no binding) | ✅ recommended |
+| **Codex** | ❌ no (built-in only) | — | ✅ only way |
+
+**Rule of thumb**: say the tier in a sentence. Works in all three tools, always.
 
 ## What it generates
 
@@ -183,21 +255,20 @@ my-project/
 └── assets/templates/*
 ```
 
-Then, inside your project:
+Once installed, see [**Invoking the skill per tool**](#invoking-the-skill-per-tool)
+above for the exact syntax to trigger each operation in Claude Code, Cursor,
+and Codex.
 
-- **Claude Code** — type one of the three slash commands: `/documentation-scaffold`, `/documentation-update`, `/documentation-bundle`. Or ask in natural language and the skill will infer (the agent asks if ambiguous).
-- **Cursor** — type one of the three slash commands in the chat. Or ask in natural language (the rule auto-loads context).
-- **Codex** — Codex does not have literal slash commands; activate with natural language ("documentá este proyecto", "actualizar docs", "generar documentación general"). The skill is available across all projects (user-level).
+### Codex install notes
 
-### Codex notes
-
-The Codex skill installs to `$CODEX_HOME/skills/documentation/` (default: `~/.codex/skills/`). It is USER-LEVEL, not per-project — installing once makes it available in every project you open with Codex. Override the destination by setting `CODEX_HOME` before running the installer.
-
-Codex activates skills by description match, not by literal slash command syntax. Phrases like "documentá este proyecto" or "generar documentación general" will trigger it.
+The Codex skill installs to `$CODEX_HOME/skills/documentation/` (default:
+`~/.codex/skills/`). It is **user-level**, not per-project — installing once
+makes it available in every project you open with Codex. Override the
+destination by setting `CODEX_HOME` before running the installer.
 
 The agent reads the templates from `.claude/skills/documentation/assets/templates/`
-and uses them to generate each documentation file, filling placeholders with
-detected stack values.
+(or from the user-level Codex skill dir) and uses them to generate each
+documentation file, filling placeholders with detected stack values.
 
 ## Skill repository layout
 
