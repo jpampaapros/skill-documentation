@@ -11,11 +11,13 @@
 //   node <path-to-skill>/install.mjs --dry-run
 
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SOURCE = dirname(fileURLToPath(import.meta.url));
 const TARGET = process.cwd();
+const CODEX_HOME = process.env.CODEX_HOME || join(homedir(), '.codex');
 
 const args = process.argv.slice(2);
 const getArg = (name) => {
@@ -68,35 +70,57 @@ function queueClaudeCode() {
 }
 
 function queueCursor() {
-  const destDir = join(TARGET, '.cursor', 'rules');
-  const dest = join(destDir, 'documentation.mdc');
+  const rulesDir = join(TARGET, '.cursor', 'rules');
+  const rulesDest = join(rulesDir, 'documentation.mdc');
+  const commandsDir = join(TARGET, '.cursor', 'commands');
+  const commandsDest = join(commandsDir, 'documentation.md');
+
   actions.push({
-    label: 'Cursor',
-    dest,
+    label: 'Cursor (rule)',
+    dest: rulesDest,
     op: () => {
-      mkdirSync(destDir, { recursive: true });
-      cpSync(join(SOURCE, 'adapters', 'cursor', 'documentation.mdc'), dest);
+      mkdirSync(rulesDir, { recursive: true });
+      cpSync(join(SOURCE, 'adapters', 'cursor', 'documentation.mdc'), rulesDest);
+    },
+  });
+  actions.push({
+    label: 'Cursor (/cmd)',
+    dest: commandsDest,
+    op: () => {
+      mkdirSync(commandsDir, { recursive: true });
+      cpSync(join(SOURCE, 'adapters', 'cursor', 'documentation.command.md'), commandsDest);
     },
   });
 }
 
 function queueCodex() {
-  const dest = join(TARGET, 'AGENTS.md');
+  const agentsDest = join(TARGET, 'AGENTS.md');
+  const skillDir = join(CODEX_HOME, 'skills', 'documentation');
+
   actions.push({
-    label: 'Codex',
-    dest,
+    label: 'Codex (ctx)',
+    dest: agentsDest,
     op: () => {
       const snippet = readFileSync(join(SOURCE, 'adapters', 'codex', 'AGENTS.snippet.md'), 'utf8').trim();
-      if (existsSync(dest)) {
-        const existing = readFileSync(dest, 'utf8');
+      if (existsSync(agentsDest)) {
+        const existing = readFileSync(agentsDest, 'utf8');
         if (existing.includes('<!-- documentation-skill:start -->')) {
-          console.log(`  skipped (already installed): ${dest}`);
+          console.log(`  skipped (already installed): ${agentsDest}`);
           return;
         }
-        writeFileSync(dest, `${existing.trimEnd()}\n\n${snippet}\n`);
+        writeFileSync(agentsDest, `${existing.trimEnd()}\n\n${snippet}\n`);
       } else {
-        writeFileSync(dest, `${snippet}\n`);
+        writeFileSync(agentsDest, `${snippet}\n`);
       }
+    },
+  });
+  actions.push({
+    label: 'Codex (skill)',
+    dest: skillDir,
+    op: () => {
+      mkdirSync(skillDir, { recursive: true });
+      cpSync(join(SOURCE, 'SKILL.md'), join(skillDir, 'SKILL.md'));
+      cpSync(join(SOURCE, 'assets'), join(skillDir, 'assets'), { recursive: true });
     },
   });
 }
@@ -109,7 +133,7 @@ for (const t of selected) {
 }
 
 for (const a of actions) {
-  console.log(`  ${a.label.padEnd(12)} -> ${a.dest}`);
+  console.log(`  ${a.label.padEnd(14)} -> ${a.dest}`);
   if (!dryRun) a.op();
 }
 

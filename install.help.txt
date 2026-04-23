@@ -4,12 +4,18 @@ Usage (from the target project root):
   node <path-to-skill>/install.mjs [options]
 
 Options:
-  --target=claude-code   Install only the Claude Code skill (.claude/skills/documentation/)
-  --target=cursor        Install only the Cursor rule (.cursor/rules/documentation.mdc)
-  --target=codex         Install only the Codex snippet (AGENTS.md at project root)
+  --target=claude-code   Install only the Claude Code skill (project: .claude/skills/documentation/)
+  --target=cursor        Install the Cursor rule + slash command (project: .cursor/rules/ + .cursor/commands/)
+  --target=codex         Install the Codex AGENTS.md snippet (project) + user-level skill (~/.codex/skills/documentation/)
   --target=all           Install all three (default)
   --dry-run              Show what would be written without writing anything
   --help, -h             Show this help message
+
+Notes:
+  - Cursor and Codex now install TWO files each so the skill is invocable as a slash
+    command / skill (not just a passive rule / context snippet).
+  - Codex skill install is USER-LEVEL (~/.codex/skills/), so it's available across all
+    projects once installed. Override the location with the CODEX_HOME env var.
 
 Examples:
   cd ~/projects/my-app

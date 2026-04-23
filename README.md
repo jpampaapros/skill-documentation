@@ -135,22 +135,37 @@ resolve correctly on every platform.
 
 ## After installing
 
-The target project ends up with:
+The installer writes files to TWO places: the target project (for Claude Code,
+Cursor rule + command, and the Codex AGENTS.md snippet) and the user's home
+(for the Codex skill, which is user-level).
 
 ```
+# Inside the target project
 my-project/
-├── .claude/skills/documentation/         # Claude Code
+├── .claude/skills/documentation/          # Claude Code skill
 │   ├── SKILL.md
 │   └── assets/templates/*
-├── .cursor/rules/documentation.mdc       # Cursor
-└── AGENTS.md                             # Codex (created or merged)
+├── .cursor/rules/documentation.mdc        # Cursor rule (auto-loads on match)
+├── .cursor/commands/documentation.md      # Cursor slash command (/documentation)
+└── AGENTS.md                              # Codex project-level context (created or merged)
+
+# Outside the project — user-level, installed once per user
+~/.codex/skills/documentation/             # Codex skill (description-matched)
+├── SKILL.md
+└── assets/templates/*
 ```
 
 Then, inside your project:
 
-- **Claude Code** — invoke with `/documentation` or ask the agent to document the project.
-- **Cursor** — open any chat in the project; the rule auto-loads based on the description.
-- **Codex** — it reads `AGENTS.md` at session start.
+- **Claude Code** — type `/documentation` or ask the agent in natural language ("documentá este proyecto", "actualizar docs", "bundle docs").
+- **Cursor** — type `/documentation` in the chat (new slash command) OR ask in natural language (the rule auto-loads).
+- **Codex** — the skill is available across all projects (user-level); activate it with natural language ("documentá este proyecto"). The project-level `AGENTS.md` snippet also provides passive context.
+
+### Codex notes
+
+The Codex skill installs to `$CODEX_HOME/skills/documentation/` (default: `~/.codex/skills/`). It is USER-LEVEL, not per-project — installing once makes it available in every project you open with Codex. Override the destination by setting `CODEX_HOME` before running the installer.
+
+Codex activates skills by description match, not by literal slash command syntax. Phrases like "documentá este proyecto" or "generar documentación general" will trigger it.
 
 The agent reads the templates from `.claude/skills/documentation/assets/templates/`
 and uses them to generate each documentation file, filling placeholders with
@@ -160,10 +175,13 @@ detected stack values.
 
 ```
 documentation/
-├── SKILL.md                              # Claude Code source of truth
+├── SKILL.md                                  # Claude Code + Codex skill source of truth
 ├── adapters/
-│   ├── cursor/documentation.mdc          # Cursor adapter
-│   └── codex/AGENTS.snippet.md           # Codex adapter
+│   ├── cursor/
+│   │   ├── documentation.mdc                 # Cursor rule (auto-loads on match)
+│   │   └── documentation.command.md          # Cursor slash command (/documentation)
+│   └── codex/
+│       └── AGENTS.snippet.md                 # Codex project-level context snippet
 ├── assets/
 │   └── templates/
 │       ├── README.template.md
@@ -171,9 +189,20 @@ documentation/
 │       ├── ARCHITECTURE.template.md
 │       ├── PLANS.template.md
 │       ├── SUBAGENTS.template.md
-│       └── docs/references/.gitkeep
-├── install.mjs                           # cross-platform installer
-├── install.help.txt                      # installer --help text
+│       └── docs/
+│           ├── DESIGN.template.md            # producto tier
+│           ├── FRONTEND.template.md
+│           ├── PRODUCT_SENSE.template.md
+│           ├── QUALITY_SCORE.template.md
+│           ├── RELIABILITY.template.md
+│           ├── SECURITY.template.md
+│           ├── design-docs/index.template.md
+│           ├── product-specs/index.template.md
+│           ├── exec-plans/.gitkeep
+│           ├── generated/.gitkeep
+│           └── references/.gitkeep
+├── install.mjs                               # cross-platform installer
+├── install.help.txt                          # installer --help text
 ├── package.json
 └── README.md
 ```
