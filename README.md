@@ -9,6 +9,17 @@ narrative markdown convention. One source of truth, three tool envelopes:
 
 Runs on Linux, macOS, and Windows via a single Node.js installer (no shell scripts).
 
+## Operations
+
+The skill has three operations. Trigger them in natural language in any of the
+three tools.
+
+| Operation | What it does | Example phrases |
+|-----------|--------------|-----------------|
+| **scaffold** (default) | Creates missing docs from templates for the detected tier. | "document the project", "documentar el proyecto", "scaffold docs" |
+| **update** | Re-audits existing docs against current code and applies section-level fixes. Does not create new files. | "update docs", "actualizar documentación", "refresh documentation" |
+| **bundle** | Concatenates all canonical doc files into a single self-contained `.md` (default: `DOCUMENTATION.md`). | "bundle docs", "generar documentación general", "consolidar docs" |
+
 ## What it generates
 
 The skill adapts to the project via three tiers. The agent detects the tier from

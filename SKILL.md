@@ -1,17 +1,19 @@
 ---
 name: documentation
 description: >
-  Generates and maintains consistent project documentation — README, CLAUDE,
-  ARCHITECTURE, PLANS, SUBAGENTS, and docs/references — following a narrative
+  Scaffolds, updates, and bundles consistent project documentation — README,
+  CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, and docs/ — following a narrative
   markdown convention that agents and humans can onboard from.
-  Trigger: when the user wants to document a project, scaffold docs from scratch,
-  update existing documentation, or enforce a documentation convention across a
-  codebase. Keywords: "document the project", "documentar el proyecto",
-  "scaffold docs", "add README", "update ARCHITECTURE".
+  Trigger: when the user wants to document a project from scratch, refresh
+  existing documentation against the current code, or consolidate all docs
+  into a single file for sharing.
+  Keywords: "document the project", "documentar el proyecto", "scaffold docs",
+  "update docs", "actualizar documentación", "refresh documentation",
+  "bundle docs", "generar documentación general", "consolidar docs".
 license: Apache-2.0
 metadata:
   author: gentleman-programming
-  version: "1.0"
+  version: "1.1"
 ---
 
 ## When to Use
@@ -21,6 +23,25 @@ metadata:
 - Architecture decisions or roadmap are undocumented.
 - User wants a consistent documentation convention across multiple projects.
 - A new developer or agent is onboarding and the codebase has no narrative.
+- The code has evolved and existing docs are stale (triggers `update`).
+- The user needs to share or paste the full project context as a single file (triggers `bundle`).
+
+## Operations
+
+The skill has three operations. Detect the user's intent from their phrasing
+BEFORE running any workflow. When ambiguous, ask.
+
+| Operation | Goal | Writes |
+|-----------|------|--------|
+| **scaffold** (default) | Create missing docs from templates for the detected tier. | New files in the canonical set. |
+| **update** | Re-audit existing docs against the current code and apply section-level fixes. | Diff-style edits to existing files only. |
+| **bundle** | Concatenate all canonical doc files into one self-contained `.md`. | A single bundled file (default: `DOCUMENTATION.md`). |
+
+### Trigger phrases
+
+- **scaffold**: "document the project", "documentar el proyecto", "scaffold docs", "add README", "add CLAUDE.md", "set up docs".
+- **update**: "update docs", "refresh documentation", "actualizar documentación", "revisar la documentación", "sync docs with code", "docs are stale".
+- **bundle**: "bundle docs", "single doc file", "generate overview", "generar documentación general", "consolidar docs", "export docs as one file", "give me all docs in one .md".
 
 ## Critical Patterns
 
@@ -102,9 +123,14 @@ Everything in standard, plus:
 
 ## Workflow
 
-Follow this sequence every time the skill is invoked:
+Start every invocation with step 0, then branch into the operation's workflow.
 
-### 1. Detect stack
+### 0. Detect intent (always)
+
+Pick one of `scaffold | update | bundle` using the trigger phrases above.
+Announce the detected operation to the user so they can redirect.
+
+### 1. Detect stack (scaffold + update)
 
 Read whichever manifests exist:
 
@@ -122,11 +148,17 @@ Read whichever manifests exist:
 
 Extract: project name, language, framework, entry point, scripts (install, run, test, build, lint), test runner, package manager.
 
-### 2. Detect tier
+### 2. Detect tier (scaffold + update)
 
 Apply the heuristics in the "Tiers" section above. Default to `standard` when uncertain.
 
-### 3. Audit existing docs
+---
+
+### A. Scaffold workflow
+
+Use when the project has no docs, or the user explicitly asks for new ones.
+
+**A.1. Audit existing docs**
 
 For each file in the selected tier's canonical set:
 
@@ -136,7 +168,7 @@ For each file in the selected tier's canonical set:
 
 Files from HIGHER tiers that already exist should be preserved and audited too — do not delete docs when downgrading tier.
 
-### 4. Apply templates
+**A.2. Apply templates**
 
 Templates live in [assets/templates/](assets/templates/). Root templates are named `<FILE>.template.md`; nested templates live under `assets/templates/docs/`.
 
@@ -147,10 +179,11 @@ Placeholders use `{{NAME}}` syntax:
 - `{{INSTALL_COMMAND}}`, `{{RUN_COMMAND}}`, `{{TEST_COMMAND}}`, `{{BUILD_COMMAND}}`, `{{LINT_COMMAND}}`
 - `{{LICENSE}}`
 
-### 5. Confirm before writing
+**A.3. Confirm before writing**
 
 Present to the user:
 
+- **Detected operation** (`scaffold`)
 - **Detected tier** (and why)
 - **Detected stack values**
 - **Files to create** (list, grouped by tier)
@@ -158,12 +191,148 @@ Present to the user:
 
 Wait for explicit approval. Do not write without a GO. The user may change the tier at this step — respect it.
 
-### 6. Write atomically
+**A.4. Write atomically**
 
 - New files → Write tool, one file at a time.
 - Existing files → Edit tool, diff-style only.
 - Never batch-overwrite. Never write without confirmation.
 - Create empty subdirectories (`docs/exec-plans/`, `docs/generated/`) with a `.gitkeep` so git tracks them.
+
+---
+
+### B. Update workflow
+
+Use when docs already exist but the code has drifted. Goal: **bring docs in sync with code**, not create new files.
+
+**B.1. Discover existing docs**
+
+List every file in the canonical set that currently exists. Also include any `docs/**/*.md` that are part of the convention. Ignore random `.md` files outside the convention.
+
+**B.2. Re-read the code for drift signals**
+
+For each existing doc, look for drift:
+
+| Doc | Drift signals |
+|-----|--------------|
+| `README.md` | Outdated scripts, stale install/run commands, missing features, broken links. |
+| `CLAUDE.md` | Framework/language mismatch vs current manifests, missing new conventions. |
+| `ARCHITECTURE.md` | New top-level folders in `src/`, removed layers, renamed modules, new domain entities. |
+| `PLANS.md` | "Now" items that were shipped (should move to "done"), stale priorities. |
+| `SUBAGENTS.md` | New hooks, new sub-agent patterns that aren't documented. |
+| `docs/*.md` | Same rules, scoped to the subsystem each file owns. |
+
+**B.3. Propose section-level diff plan**
+
+For each file, list the sections that need changes. Format:
+
+```
+ARCHITECTURE.md
+  - Layers table: add "src/workers/" (new folder), remove "src/legacy/" (deleted)
+  - Key decisions: add ADR for switching from REST to tRPC
+
+PLANS.md
+  - Move "Implement auth" from "Now" to "Done" (shipped in v1.2)
+  - Add "Mobile app" to "Later"
+```
+
+**B.4. Confirm before editing**
+
+Wait for explicit approval. The user may accept all, reject some, or add sections to update.
+
+**B.5. Apply edits**
+
+- Use Edit tool, section by section. Diff-style only.
+- Never rewrite a file end-to-end unless explicitly asked — preserve the user's prose.
+- Do NOT create new files in update mode. If a higher-tier file is missing and the project now warrants it, suggest running `scaffold` to add it.
+
+**B.6. Report**
+
+Summarize what changed per file. Keep it tight: one line per section touched.
+
+---
+
+### C. Bundle workflow
+
+Use when the user wants ONE self-contained `.md` with the full project documentation.
+
+**C.1. Discover doc files in canonical order**
+
+Collect files in this order, skipping what doesn't exist:
+
+1. `README.md`
+2. `CLAUDE.md`
+3. `AGENTS.md` (skip if content is a duplicate of `CLAUDE.md`)
+4. `SUBAGENTS.md`
+5. `ARCHITECTURE.md`
+6. `PLANS.md`
+7. `docs/PRODUCT_SENSE.md`
+8. `docs/DESIGN.md`
+9. `docs/FRONTEND.md`
+10. `docs/RELIABILITY.md`
+11. `docs/SECURITY.md`
+12. `docs/QUALITY_SCORE.md`
+13. `docs/design-docs/index.md` + `docs/design-docs/*.md` (alphabetical, skip index duplicate)
+14. `docs/product-specs/index.md` + `docs/product-specs/*.md` (alphabetical)
+15. `docs/exec-plans/*.md` (alphabetical)
+16. `docs/references/*.md` (alphabetical)
+17. `docs/generated/*.md` (alphabetical)
+
+**C.2. Ask for output path**
+
+Default: `DOCUMENTATION.md` at the project root. Confirm or let the user pick a different path (e.g. `docs/OVERVIEW.md`, or a path outside the repo like `~/Desktop/project-docs.md`).
+
+**C.3. Assemble the bundle**
+
+Structure of the output file:
+
+```markdown
+# {{PROJECT_NAME}} — Full Documentation
+
+> Bundled on {{ISO_DATE}} from {{FILE_COUNT}} source files.
+
+## Table of Contents
+
+- [README](#readme)
+- [CLAUDE](#claude)
+- [...]
+
+---
+
+## README
+
+> Source: `README.md`
+
+<file contents, headings demoted by one level>
+
+---
+
+## CLAUDE
+
+> Source: `CLAUDE.md`
+
+<file contents, headings demoted by one level>
+
+---
+
+... (continues for every file)
+```
+
+Rules:
+- Demote every heading in the embedded content by ONE level (`# X` → `## X`, `## Y` → `### Y`) so the document has a single H1.
+- Preserve relative links as-is. Do not try to rewrite them.
+- Do not modify the source files — the bundle is read-only consumption.
+
+**C.4. Confirm before writing**
+
+Present: target path, list of source files included (and any skipped + why), total line count estimate. Wait for GO.
+
+**C.5. Write the bundle**
+
+Single Write call. If the target file already exists, diff and ask before overwriting.
+
+**C.6. Report**
+
+List the source files included and the final output path. Remind the user the bundle is a snapshot — running `bundle` again after code changes will regenerate it.
 
 ## Output Layout
 

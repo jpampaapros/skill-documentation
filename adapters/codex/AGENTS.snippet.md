@@ -3,6 +3,17 @@
 
 This project follows the gentleman-programming documentation convention: a tiered
 set of narrative markdown files, scaling from minimum (4 files) to producto (15+).
+The skill supports three operations: **scaffold** (create missing docs),
+**update** (re-audit existing docs vs code), and **bundle** (concatenate all
+docs into a single `.md`).
+
+### Operations
+
+| Operation | Trigger phrases |
+|-----------|-----------------|
+| **scaffold** (default) | "document the project", "scaffold docs", "documentar el proyecto" |
+| **update** | "update docs", "actualizar documentación", "refresh documentation" |
+| **bundle** | "bundle docs", "generar documentación general", "consolidar docs" |
 
 ### Tiers
 
@@ -33,14 +44,38 @@ Auto-detect (first match wins): **producto** if auth deps or ORM + migrations or
 7. **Commit-friendly.** Every file must be diffable and stable.
 8. **Do not fabricate.** For producto-tier sections without real content yet, leave the template hints and mark `<!-- TODO: fill when ready -->`.
 
-### Workflow when documenting
+### Workflow
 
-1. **Detect stack** — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`, or WordPress signals.
-2. **Detect tier** — apply heuristics; default to `standard`.
-3. **Audit existing docs** — missing → create; exists → diff against template; out of convention → propose migration. Preserve higher-tier docs that already exist.
+**0. Detect intent** — pick `scaffold | update | bundle` from the user's phrasing. Announce the choice.
+
+**1. Detect stack** (scaffold + update) — `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`, or WordPress signals.
+
+**2. Detect tier** (scaffold + update) — apply heuristics; default to `standard`.
+
+#### Scaffold
+
+3. **Audit** — missing → create; exists → diff; out of convention → propose migration. Preserve higher-tier docs that already exist.
 4. **Apply templates** — fill placeholders with detected values.
-5. **Confirm** — present detected tier, stack, files to create grouped by tier, files to update with diff summary. Wait for explicit GO.
-6. **Write atomically** — new files in one shot, existing files with diff-style edits only. Create `.gitkeep` for empty subdirectories.
+5. **Confirm** — present operation, tier, stack, files to create, files to update. Wait for explicit GO.
+6. **Write atomically** — new files in one shot, existing files with diff-style edits. `.gitkeep` for empty subdirs.
+
+#### Update
+
+3. **Discover existing docs** — list every canonical file that currently exists.
+4. **Detect drift** — compare each doc against current code (manifests, `src/` layout, scripts, shipped features). Flag stale sections.
+5. **Propose section-level diff plan** — do NOT create new files; suggest `scaffold` if higher-tier files are needed.
+6. **Confirm** — wait for GO. User may accept, reject, or add sections.
+7. **Apply edits** — Edit tool, section by section. Preserve user prose. Never end-to-end rewrite.
+8. **Report** — one line per section touched.
+
+#### Bundle
+
+3. **Discover doc files in canonical order** — README, CLAUDE, (AGENTS if distinct), SUBAGENTS, ARCHITECTURE, PLANS, docs/* (PRODUCT_SENSE, DESIGN, FRONTEND, RELIABILITY, SECURITY, QUALITY_SCORE), docs/design-docs/*, docs/product-specs/*, docs/exec-plans/*, docs/references/*, docs/generated/*.
+4. **Ask output path** — default `DOCUMENTATION.md` at project root.
+5. **Assemble bundle** — single H1 + "Bundled on {date}" + TOC + each source file as `## Source: <path>` with headings demoted by one level. Preserve links. Do NOT modify source files.
+6. **Confirm** — target path, files included, files skipped + why. Wait for GO. If target exists, diff and ask before overwriting.
+7. **Write** — single Write call.
+8. **Report** — source files + final path. Bundle is a snapshot; re-run after code changes.
 
 ### Placeholders
 

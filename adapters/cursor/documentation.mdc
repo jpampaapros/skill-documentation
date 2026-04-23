@@ -1,13 +1,13 @@
 ---
-description: Documents a project using the gentleman-programming convention — README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, docs/references. Invoke when the user asks to document a project, scaffold docs, or update existing documentation.
+description: Scaffolds, updates, and bundles project documentation using the gentleman-programming convention — README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, docs/. Invoke on "document the project", "update docs", "actualizar documentación", "bundle docs", or "generar documentación general".
 globs:
 alwaysApply: false
 ---
 
 # documentation
 
-Generates and maintains consistent project documentation following a narrative
-markdown convention that agents and humans can onboard from.
+Generates, updates, and bundles consistent project documentation following a
+narrative markdown convention that agents and humans can onboard from.
 
 ## When to Use
 
@@ -15,6 +15,18 @@ markdown convention that agents and humans can onboard from.
 - Project lacks agent-facing context files (CLAUDE.md, SUBAGENTS.md).
 - Architecture decisions or roadmap are undocumented.
 - A new developer or agent is onboarding and the codebase has no narrative.
+- Code has evolved and existing docs are stale (`update`).
+- User needs a single consolidated `.md` to share or paste as context (`bundle`).
+
+## Operations
+
+| Operation | Goal | Trigger phrases |
+|-----------|------|-----------------|
+| **scaffold** (default) | Create missing docs from templates. | "document the project", "scaffold docs", "documentar" |
+| **update** | Re-audit existing docs vs current code, apply section-level fixes. | "update docs", "actualizar documentación", "refresh docs" |
+| **bundle** | Concatenate all docs into one self-contained `.md`. | "bundle docs", "generar documentación general", "consolidar docs" |
+
+Detect the operation from the user's phrasing. When ambiguous, ask.
 
 ## Tiers
 
@@ -54,12 +66,36 @@ User can override with `--tier=...` or in natural language.
 
 ## Workflow
 
-1. **Detect stack** — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`, or WordPress signals (`style.css` + `functions.php`). Extract project name, framework, and scripts.
-2. **Detect tier** — apply the heuristics above; default to `standard`.
-3. **Audit existing docs** — for each canonical file in the chosen tier: missing → create; exists → diff against template; out of convention → propose migration. Preserve higher-tier docs that already exist.
-4. **Apply templates** — fill `{{PROJECT_NAME}}`, `{{FRAMEWORK}}`, `{{RUN_COMMAND}}`, etc. Templates live in `.claude/skills/documentation/assets/templates/` after install (root templates + `docs/` subfolder for producto).
-5. **Confirm** — present detected tier, detected stack values, files to create grouped by tier, and files to update. Wait for GO.
-6. **Write atomically** — new files via Write, existing via Edit. Never batch-overwrite. Create `.gitkeep` for empty subdirectories.
+**0. Detect intent** — pick `scaffold | update | bundle` from the user's phrasing. Announce the choice so the user can redirect.
+
+**1. Detect stack** (scaffold + update) — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`, or WordPress signals (`style.css` + `functions.php`). Extract project name, framework, and scripts.
+
+**2. Detect tier** (scaffold + update) — apply the heuristics above; default to `standard`.
+
+### Scaffold path
+
+3. **Audit** — for each canonical file in the chosen tier: missing → create; exists → diff against template; out of convention → propose migration. Preserve higher-tier docs that already exist.
+4. **Apply templates** — fill `{{PROJECT_NAME}}`, `{{FRAMEWORK}}`, `{{RUN_COMMAND}}`, etc. Templates live in `.claude/skills/documentation/assets/templates/` (root + `docs/` subfolder for producto).
+5. **Confirm** — present operation, detected tier, stack, files to create, files to update. Wait for GO.
+6. **Write atomically** — new files via Write, existing via Edit. Never batch-overwrite. `.gitkeep` for empty subdirs.
+
+### Update path
+
+3. **Discover existing docs** — list every canonical file that currently exists.
+4. **Detect drift** — for each file, compare against current code (manifests, `src/` layout, scripts, shipped features). Flag stale sections.
+5. **Propose section-level diff plan** — one-line-per-section list of changes. Do NOT create new files; suggest `scaffold` if higher-tier files are needed.
+6. **Confirm** — wait for GO. User may accept all, reject some, or add sections.
+7. **Apply edits** — Edit tool, section by section, diff-style. Preserve user prose. Never end-to-end rewrite.
+8. **Report** — one line per section touched.
+
+### Bundle path
+
+3. **Discover doc files in canonical order** — README, CLAUDE, (AGENTS if distinct), SUBAGENTS, ARCHITECTURE, PLANS, docs/* (PRODUCT_SENSE, DESIGN, FRONTEND, RELIABILITY, SECURITY, QUALITY_SCORE), docs/design-docs/*, docs/product-specs/*, docs/exec-plans/*, docs/references/*, docs/generated/*.
+4. **Ask output path** — default `DOCUMENTATION.md` at project root.
+5. **Assemble bundle** — single H1 title + "Bundled on {date}" + TOC + each source file as `## Source: <path>` with headings demoted by one level. Preserve links.
+6. **Confirm** — present target path, files included, files skipped + why. Wait for GO. If target exists, diff and ask before overwriting.
+7. **Write** — single Write call.
+8. **Report** — source files + final path. Remind the user bundles are snapshots; re-run after code changes.
 
 ## Placeholders
 
