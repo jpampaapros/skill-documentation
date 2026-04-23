@@ -26,26 +26,70 @@ Runs on Linux, macOS, and Windows via a single Node.js installer (no shell scrip
 
 ## Install in a project
 
-```bash
-# Clone this skill once (anywhere on your machine)
-git clone <this-repo> ~/skills/documentation
+Pick the path that fits your use case:
 
-# Then, from the root of each project you want to document:
+| Path | Installs | When to use |
+|------|----------|-------------|
+| A. `skills` CLI | Claude Code only | Fastest. You only use Claude Code. |
+| B. `npx github:` | Claude Code + Cursor + Codex | You want all three envelopes without cloning. |
+| C. `git clone` + installer | Claude Code + Cursor + Codex | Reuse across many projects, easy `git pull` updates. |
+
+### A. Claude Code only — `skills` CLI (one-liner, sparse fetch)
+
+Uses the [Vercel `skills` CLI](https://github.com/vercel-labs/skills). Pulls only the
+skill folder via the GitHub Blob API (no full clone) and symlinks it into the
+Claude Code skills directory.
+
+```bash
+# Global — available in every project on this machine
+npx -y skills add jpampaapros/skill-documentation -g -y
+
+# Or project-level — only for the current project
+cd /path/to/my-project
+npx -y skills add jpampaapros/skill-documentation -y
+```
+
+Copy instead of symlink: add `--copy`.
+
+> Limitation: `skills add` only installs the Claude Code envelope. For Cursor and
+> Codex, use path B or C.
+
+### B. All three envelopes — `npx` from GitHub (no clone)
+
+Runs this repo's installer directly from GitHub. No local clone needed.
+
+```bash
+cd /path/to/my-project
+npx -y github:jpampaapros/skill-documentation
+```
+
+Flags:
+
+```bash
+npx -y github:jpampaapros/skill-documentation --target=claude-code
+npx -y github:jpampaapros/skill-documentation --target=cursor
+npx -y github:jpampaapros/skill-documentation --target=codex
+npx -y github:jpampaapros/skill-documentation --target=all        # default
+npx -y github:jpampaapros/skill-documentation --dry-run
+```
+
+### C. All three envelopes — `git clone` + installer (reusable)
+
+Clone once, reuse everywhere. Best when you'll document many projects and want
+local control over the skill version.
+
+```bash
+# One time, anywhere on your machine
+git clone https://github.com/jpampaapros/skill-documentation.git ~/skills/documentation
+
+# Then, from the root of each project you want to document
 cd /path/to/my-project
 node ~/skills/documentation/install.mjs
 ```
 
-### Targets
+Same `--target` and `--dry-run` flags as path B.
 
-```bash
-node ~/skills/documentation/install.mjs --target=claude-code
-node ~/skills/documentation/install.mjs --target=cursor
-node ~/skills/documentation/install.mjs --target=codex
-node ~/skills/documentation/install.mjs --target=all        # default
-node ~/skills/documentation/install.mjs --dry-run
-```
-
-### Cross-platform notes
+### Cross-platform notes (path C)
 
 | OS | Shell | Command |
 |----|-------|---------|
@@ -105,15 +149,34 @@ documentation/
 
 ## Updating the skill
 
-To update an installed project with a newer version of the skill:
+Depends on which install path you used:
 
 ```bash
+# Path A — skills CLI (Claude Code only)
+npx -y skills add jpampaapros/skill-documentation -g -y --copy     # re-pull
+
+# Path B — npx from GitHub (no local clone)
 cd /path/to/my-project
-node ~/skills/documentation/install.mjs      # overwrites the skill files
+npx -y github:jpampaapros/skill-documentation                      # re-run installer
+
+# Path C — local clone
+cd ~/skills/documentation && git pull
+cd /path/to/my-project && node ~/skills/documentation/install.mjs  # overwrites
 ```
 
 The Codex `AGENTS.md` merge is idempotent — reinstalling detects the
 `<!-- documentation-skill:start -->` marker and skips duplication.
+
+## Commit the installed files
+
+After installing, commit the generated files in your project so the skill
+travels with the repo:
+
+```bash
+cd /path/to/my-project
+git add .claude/ .cursor/ AGENTS.md
+git commit -m "chore: install documentation skill"
+```
 
 ## License
 
