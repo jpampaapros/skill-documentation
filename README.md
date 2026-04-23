@@ -17,9 +17,95 @@ The skill has three operations.
 |-----------|--------------|
 | **scaffold** | Creates missing docs from templates for the detected tier. |
 | **update** | Re-audits existing docs against current code, applies section-level fixes. Does NOT create new files — if a higher-tier file is missing, tells you to run scaffold. |
-| **bundle** | Concatenates all canonical doc files into `DOCUMENTATION.md`. If no docs exist, offers to scaffold them first. |
+| **bundle** | Consolidates all canonical doc files into one self-contained `DOCUMENTATION.md`. Human-readable section titles (Overview, Architecture, Roadmap — not file paths), invisible provenance comments, and internal links rewritten to in-bundle anchors. If no docs exist, offers to scaffold them first. |
 
 See the next section for the exact syntax to invoke each operation in each tool.
+
+### Example bundle output
+
+Running `/documentation-bundle` on a minimum-tier WordPress theme (4 canonical
+docs: README, CLAUDE, ARCHITECTURE, PLANS) produces a single `DOCUMENTATION.md`
+like this:
+
+````markdown
+# mi-tema-wordpress — Full Documentation
+
+> Complete project documentation consolidated on 2026-04-23.
+> Self-contained — no external files required to read this.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Agent Conventions](#agent-conventions)
+3. [Architecture](#architecture)
+4. [Roadmap](#roadmap)
+
+---
+
+## Overview
+
+<!-- sourced from README.md -->
+
+mi-tema-wordpress es un tema WordPress personalizado para…
+
+### Stack
+- **Language**: PHP
+- **Framework**: WordPress 6.x
+
+See [Architecture](#architecture) for the domain model and
+[Roadmap](#roadmap) for current priorities.
+
+---
+
+## Agent Conventions
+
+<!-- sourced from CLAUDE.md -->
+
+### Stack
+- **Language**: PHP
+…
+
+### Commands
+…
+
+---
+
+## Architecture
+
+<!-- sourced from ARCHITECTURE.md -->
+
+### Domain
+…
+
+### Key Decisions
+…
+
+---
+
+## Roadmap
+
+<!-- sourced from PLANS.md -->
+
+### Now
+- [ ] Implement custom post types for events
+
+### Next
+- [ ] Add sidebar widget area
+
+### Done
+- [x] Scaffold theme structure
+````
+
+Key properties of the bundle:
+
+- **Human-readable section titles** — `## Overview`, `## Agent Conventions`, `## Architecture`, `## Roadmap`. No `## Source: README.md` noise pointing at other files.
+- **Invisible provenance** — `<!-- sourced from <path> -->` HTML comments under each heading let you trace what came from where in the raw markdown, but disappear in the rendered view.
+- **Rewritten internal links** — `[ARCHITECTURE.md](./ARCHITECTURE.md)` becomes `[Architecture](#architecture)`, linking to the in-bundle anchor. No broken pointers.
+- **Flagged external links** — `[app.tsx](./src/app.tsx)` becomes `[app.tsx](./src/app.tsx) *(external — requires repo access)*` so the reader knows that link needs the original repo.
+- **Demoted headings** — every heading in embedded content drops one level, so the bundle has a single H1 at the top.
+- **Read-only** — the bundle is generated; source files are never modified.
+
+The output is portable: paste it into a chatbot, share it as a PDF, drop it in Notion, or archive it. Everything is inside.
 
 ## Invoking the skill per tool
 

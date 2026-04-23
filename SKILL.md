@@ -305,56 +305,100 @@ Collect files in this order, skipping what doesn't exist:
 
 Default: `DOCUMENTATION.md` at the project root. Confirm or let the user pick a different path (e.g. `docs/OVERVIEW.md`, or a path outside the repo like `~/Desktop/project-docs.md`).
 
-**C.3. Assemble the bundle**
+**C.3. Map filenames to human-readable section titles**
+
+The bundle MUST be self-contained. Section titles are human-readable — not file paths — so the reader is not pointed to external files.
+
+| Source file | Section title in the bundle |
+|-------------|-----------------------------|
+| `README.md` | `## Overview` |
+| `CLAUDE.md` | `## Agent Conventions` |
+| `AGENTS.md` | `## Codex Agent Conventions` (skip if it duplicates CLAUDE.md) |
+| `SUBAGENTS.md` | `## Sub-agent Patterns` |
+| `ARCHITECTURE.md` | `## Architecture` |
+| `PLANS.md` | `## Roadmap` |
+| `docs/PRODUCT_SENSE.md` | `## Product Sense` |
+| `docs/DESIGN.md` | `## Design System` |
+| `docs/FRONTEND.md` | `## Frontend Architecture` |
+| `docs/RELIABILITY.md` | `## Reliability` |
+| `docs/SECURITY.md` | `## Security` |
+| `docs/QUALITY_SCORE.md` | `## Quality Score` |
+| `docs/design-docs/index.md` | `## Design Documents — Index` |
+| `docs/design-docs/<name>.md` | `## Design: <first H1 of the file, or filename in Title Case>` |
+| `docs/product-specs/index.md` | `## Product Specs — Index` |
+| `docs/product-specs/<name>.md` | `## Spec: <first H1, or filename Title Case>` |
+| `docs/exec-plans/<name>.md` | `## Exec Plan: <first H1, or filename Title Case>` |
+| `docs/references/<name>.md` | `## Reference: <first H1, or filename Title Case>` |
+| `docs/generated/<name>.md` | `## Generated: <first H1, or filename Title Case>` |
+
+Prefer the first H1 inside the source file over the filename — authors usually write better titles than kebab-case implies. Fall back to filename-in-Title-Case when there is no H1.
+
+**C.4. Assemble the bundle**
 
 Structure of the output file:
 
 ```markdown
 # {{PROJECT_NAME}} — Full Documentation
 
-> Bundled on {{ISO_DATE}} from {{FILE_COUNT}} source files.
+> Complete project documentation consolidated on {{ISO_DATE}}.
+> Self-contained — no external files required to read this.
 
 ## Table of Contents
 
-- [README](#readme)
-- [CLAUDE](#claude)
-- [...]
+1. [Overview](#overview)
+2. [Agent Conventions](#agent-conventions)
+3. [Architecture](#architecture)
+4. [Roadmap](#roadmap)
 
 ---
 
-## README
+## Overview
 
-> Source: `README.md`
+<!-- sourced from README.md -->
 
-<file contents, headings demoted by one level>
-
----
-
-## CLAUDE
-
-> Source: `CLAUDE.md`
-
-<file contents, headings demoted by one level>
+<file contents, headings demoted by one level, links rewritten per C.5>
 
 ---
 
-... (continues for every file)
+## Agent Conventions
+
+<!-- sourced from CLAUDE.md -->
+
+<file contents, headings demoted by one level, links rewritten per C.5>
+
+---
+
+... (continues for every file in canonical order)
 ```
 
 Rules:
-- Demote every heading in the embedded content by ONE level (`# X` → `## X`, `## Y` → `### Y`) so the document has a single H1.
-- Preserve relative links as-is. Do not try to rewrite them.
-- Do not modify the source files — the bundle is read-only consumption.
+- Demote every heading in embedded content by ONE level (`# X` → `## X`, `## Y` → `### Y`) so the bundle has a single H1.
+- The section title is the HUMAN-READABLE one from the mapping table in C.3 — NOT the filename.
+- Provenance goes in an HTML comment directly under each section header: `<!-- sourced from <relative-path> -->`. This stays invisible when rendered but traceable in the raw markdown.
+- Do NOT include any `> Source: <path>` blockquotes or other file-path markers in the rendered body.
+- Do NOT modify the source files — the bundle is a read-only consolidation.
 
-**C.4. Confirm before writing**
+**C.5. Rewrite relative links so the bundle is standalone**
+
+The bundle must read correctly without access to the original repo. Every relative link in embedded content needs to be handled:
+
+- **Link points to a canonical doc inside the bundle** (e.g. `[Architecture](./ARCHITECTURE.md)`, `[Security](./docs/SECURITY.md)`) → rewrite to the anchor of that section in the bundle: `[Architecture](#architecture)`, `[Security](#security)`.
+- **Link points to a canonical doc that is NOT in the bundle** (the source file didn't exist, so it was skipped) → rewrite to plain text and add a marker: `Architecture *(not in this bundle)*`.
+- **Link points to a non-doc file in the repo** (e.g. `[app.tsx](./src/app.tsx)`, `[package.json](./package.json)`) → keep the link but mark it external: `[app.tsx](./src/app.tsx) *(external — requires repo access)*`.
+- **Absolute external URL** (e.g. `https://example.com`) → leave untouched.
+- **Anchor-only link** (e.g. `[see below](#section)`) → leave untouched.
+
+Use the TOC anchors generated in C.4 as the canonical anchor names (GitHub-style: lowercase, spaces → hyphens, strip punctuation).
+
+**C.6. Confirm before writing**
 
 Present: target path, list of source files included (and any skipped + why), total line count estimate. Wait for GO.
 
-**C.5. Write the bundle**
+**C.7. Write the bundle**
 
 Single Write call. If the target file already exists, diff and ask before overwriting.
 
-**C.6. Report**
+**C.8. Report**
 
 List the source files included and the final output path. Remind the user the bundle is a snapshot — running `bundle` again after code changes will regenerate it.
 
