@@ -20,6 +20,25 @@ The skill has three operations. In Claude Code and Cursor each has its own
 | **update** | `/documentation-update` | "actualizar documentación", "update docs" | Re-audits existing docs against current code, applies section-level fixes. Does NOT create new files — if a higher-tier file is missing, tells you to run scaffold. |
 | **bundle** | `/documentation-bundle` | "generar documentación general", "bundle docs" | Concatenates all canonical doc files into `DOCUMENTATION.md`. If no docs exist, offers to scaffold them first. |
 
+### Picking a tier (cross-tool)
+
+The **only** way to pick a tier that works identically in the three tools is
+**natural language** — mention the tier after the command (Claude Code / Cursor)
+or inside the sentence (Codex). The agent confirms in step 5 before writing.
+
+| Tool | What works | Why |
+|------|-----------|-----|
+| **Claude Code** | `/documentation-scaffold` + then say `"usá tier minimum"` — or pass `minimum` as the first argument (`$ARGUMENTS`). | Supports `argument-hint` in frontmatter. |
+| **Cursor** | `/documentation-scaffold` + then say `"usá tier minimum"`. | Cursor slash commands do NOT have a formal argument system — only `name` + `description` + body. Trailing text is context, not an argument. |
+| **Codex** | Say it in natural language: `"documentá este proyecto como minimum"`. | Codex has no literal slash commands. |
+
+Recommendation: **always use natural language for the tier**. Portable across all
+three tools, auditable in the agent's readback, and the confirm step catches any
+mismatch before writes.
+
+Do NOT rely on `/documentation-scaffold minimum` as a universal syntax — that
+only works cleanly in Claude Code.
+
 ## What it generates
 
 The skill adapts to the project via three tiers. The agent detects the tier from
