@@ -1,0 +1,26 @@
+{
+  "name": "documentation-skill",
+  "version": "1.0.0",
+  "description": "Cross-platform documentation skill for Claude Code, Cursor, and Codex. Generates README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, and docs/references using a narrative markdown convention.",
+  "type": "module",
+  "bin": {
+    "documentation-install": "./install.mjs"
+  },
+  "scripts": {
+    "install-here": "node install.mjs"
+  },
+  "engines": {
+    "node": ">=16.7.0"
+  },
+  "keywords": [
+    "documentation",
+    "skill",
+    "claude-code",
+    "cursor",
+    "codex",
+    "agents",
+    "scaffolding"
+  ],
+  "license": "Apache-2.0",
+  "author": "gentleman-programming"
+}
