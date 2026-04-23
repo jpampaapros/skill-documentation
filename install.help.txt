@@ -4,16 +4,24 @@ Usage (from the target project root):
   node <path-to-skill>/install.mjs [options]
 
 Options:
-  --target=claude-code   Install only the Claude Code skill (project: .claude/skills/documentation/)
-  --target=cursor        Install the Cursor rule + slash command (project: .cursor/rules/ + .cursor/commands/)
-  --target=codex         Install the Codex AGENTS.md snippet (project) + user-level skill (~/.codex/skills/documentation/)
+  --target=claude-code   Install the Claude Code skill + three slash commands
+                         (.claude/skills/documentation/ and .claude/commands/documentation-{scaffold,update,bundle}.md)
+  --target=cursor        Install the Cursor rule + three slash commands
+                         (.cursor/rules/documentation.mdc and .cursor/commands/documentation-{scaffold,update,bundle}.md)
+  --target=codex         Install the Codex AGENTS.md snippet (project) + user-level skill
+                         (~/.codex/skills/documentation/)
   --target=all           Install all three (default)
   --dry-run              Show what would be written without writing anything
   --help, -h             Show this help message
 
+Operations (each is a separate slash command in Claude Code and Cursor):
+  /documentation-scaffold  Create missing docs from templates for the detected tier.
+  /documentation-update    Re-audit existing docs vs current code; section-level edits only.
+  /documentation-bundle    Concatenate all docs into one .md; offers to scaffold first if empty.
+
 Notes:
-  - Cursor and Codex now install TWO files each so the skill is invocable as a slash
-    command / skill (not just a passive rule / context snippet).
+  - Codex does NOT have literal slash commands. Trigger operations in natural language
+    ("documentá el proyecto", "actualizar docs", "generar documentación general").
   - Codex skill install is USER-LEVEL (~/.codex/skills/), so it's available across all
     projects once installed. Override the location with the CODEX_HOME env var.
 

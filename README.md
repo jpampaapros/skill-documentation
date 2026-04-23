@@ -11,14 +11,14 @@ Runs on Linux, macOS, and Windows via a single Node.js installer (no shell scrip
 
 ## Operations
 
-The skill has three operations. Trigger them in natural language in any of the
-three tools.
+The skill has three operations. In Claude Code and Cursor each has its own
+**explicit slash command**; in Codex they activate by natural-language phrasing.
 
-| Operation | What it does | Example phrases |
-|-----------|--------------|-----------------|
-| **scaffold** (default) | Creates missing docs from templates for the detected tier. | "document the project", "documentar el proyecto", "scaffold docs" |
-| **update** | Re-audits existing docs against current code and applies section-level fixes. Does not create new files. | "update docs", "actualizar documentación", "refresh documentation" |
-| **bundle** | Concatenates all canonical doc files into a single self-contained `.md` (default: `DOCUMENTATION.md`). | "bundle docs", "generar documentación general", "consolidar docs" |
+| Operation | Slash command (Claude Code + Cursor) | Natural language (Codex) | What it does |
+|-----------|--------------------------------------|--------------------------|--------------|
+| **scaffold** | `/documentation-scaffold` | "documentar el proyecto", "document the project" | Creates missing docs from templates for the detected tier. |
+| **update** | `/documentation-update` | "actualizar documentación", "update docs" | Re-audits existing docs against current code, applies section-level fixes. Does NOT create new files — if a higher-tier file is missing, tells you to run scaffold. |
+| **bundle** | `/documentation-bundle` | "generar documentación general", "bundle docs" | Concatenates all canonical doc files into `DOCUMENTATION.md`. If no docs exist, offers to scaffold them first. |
 
 ## What it generates
 
@@ -142,11 +142,20 @@ Cursor rule + command, and the Codex AGENTS.md snippet) and the user's home
 ```
 # Inside the target project
 my-project/
-├── .claude/skills/documentation/          # Claude Code skill
-│   ├── SKILL.md
-│   └── assets/templates/*
-├── .cursor/rules/documentation.mdc        # Cursor rule (auto-loads on match)
-├── .cursor/commands/documentation.md      # Cursor slash command (/documentation)
+├── .claude/
+│   ├── skills/documentation/              # Claude Code skill (auto-matches)
+│   │   ├── SKILL.md
+│   │   └── assets/templates/*
+│   └── commands/                          # Claude Code slash commands (explicit)
+│       ├── documentation-scaffold.md
+│       ├── documentation-update.md
+│       └── documentation-bundle.md
+├── .cursor/
+│   ├── rules/documentation.mdc            # Cursor rule (auto-loads on match)
+│   └── commands/                          # Cursor slash commands (explicit)
+│       ├── documentation-scaffold.md
+│       ├── documentation-update.md
+│       └── documentation-bundle.md
 └── AGENTS.md                              # Codex project-level context (created or merged)
 
 # Outside the project — user-level, installed once per user
@@ -157,9 +166,9 @@ my-project/
 
 Then, inside your project:
 
-- **Claude Code** — type `/documentation` or ask the agent in natural language ("documentá este proyecto", "actualizar docs", "bundle docs").
-- **Cursor** — type `/documentation` in the chat (new slash command) OR ask in natural language (the rule auto-loads).
-- **Codex** — the skill is available across all projects (user-level); activate it with natural language ("documentá este proyecto"). The project-level `AGENTS.md` snippet also provides passive context.
+- **Claude Code** — type one of the three slash commands: `/documentation-scaffold`, `/documentation-update`, `/documentation-bundle`. Or ask in natural language and the skill will infer (the agent asks if ambiguous).
+- **Cursor** — type one of the three slash commands in the chat. Or ask in natural language (the rule auto-loads context).
+- **Codex** — Codex does not have literal slash commands; activate with natural language ("documentá este proyecto", "actualizar docs", "generar documentación general"). The skill is available across all projects (user-level).
 
 ### Codex notes
 
@@ -177,9 +186,15 @@ detected stack values.
 documentation/
 ├── SKILL.md                                  # Claude Code + Codex skill source of truth
 ├── adapters/
+│   ├── claude-code/                          # Claude Code slash commands
+│   │   ├── documentation-scaffold.command.md
+│   │   ├── documentation-update.command.md
+│   │   └── documentation-bundle.command.md
 │   ├── cursor/
 │   │   ├── documentation.mdc                 # Cursor rule (auto-loads on match)
-│   │   └── documentation.command.md          # Cursor slash command (/documentation)
+│   │   ├── documentation-scaffold.command.md # Cursor slash commands
+│   │   ├── documentation-update.command.md
+│   │   └── documentation-bundle.command.md
 │   └── codex/
 │       └── AGENTS.snippet.md                 # Codex project-level context snippet
 ├── assets/

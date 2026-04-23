@@ -28,20 +28,25 @@ metadata:
 
 ## Operations
 
-The skill has three operations. Detect the user's intent from their phrasing
-BEFORE running any workflow. When ambiguous, ask.
+The skill has three operations, each exposed as a **separate slash command** in
+Claude Code and Cursor. This is deliberate — one command per operation so the
+user's intent is unambiguous.
 
-| Operation | Goal | Writes |
-|-----------|------|--------|
-| **scaffold** (default) | Create missing docs from templates for the detected tier. | New files in the canonical set. |
-| **update** | Re-audit existing docs against the current code and apply section-level fixes. | Diff-style edits to existing files only. |
-| **bundle** | Concatenate all canonical doc files into one self-contained `.md`. | A single bundled file (default: `DOCUMENTATION.md`). |
+| Operation | Slash command | Goal | Writes |
+|-----------|---------------|------|--------|
+| **scaffold** | `/documentation-scaffold` | Create missing docs from templates for the detected tier. | New files in the canonical set. |
+| **update** | `/documentation-update` | Re-audit existing docs against the current code and apply section-level fixes. | Diff-style edits to existing files only. Never creates new files. |
+| **bundle** | `/documentation-bundle` | Concatenate all canonical doc files into one self-contained `.md`. If no docs exist, offers to scaffold first. | A single bundled file (default: `DOCUMENTATION.md`). |
 
-### Trigger phrases
+In Codex (which does not have literal slash commands), the skill activates by
+description match on these trigger phrases:
 
 - **scaffold**: "document the project", "documentar el proyecto", "scaffold docs", "add README", "add CLAUDE.md", "set up docs".
 - **update**: "update docs", "refresh documentation", "actualizar documentación", "revisar la documentación", "sync docs with code", "docs are stale".
-- **bundle**: "bundle docs", "single doc file", "generate overview", "generar documentación general", "consolidar docs", "export docs as one file", "give me all docs in one .md".
+- **bundle**: "bundle docs", "single doc file", "generate overview", "generar documentación general", "consolidar docs", "export docs as one file".
+
+When no slash command is used AND the intent is ambiguous, ask the user before
+running any workflow.
 
 ## Critical Patterns
 
@@ -254,6 +259,25 @@ Summarize what changed per file. Keep it tight: one line per section touched.
 ### C. Bundle workflow
 
 Use when the user wants ONE self-contained `.md` with the full project documentation.
+
+**C.0. Pre-flight — handle the "no docs" case**
+
+Before discovering files, check whether any canonical doc exists in the project (root-level or under `docs/`).
+
+- **Zero canonical docs exist** → ask the user:
+  > "No canonical docs found in this project. How do you want to proceed?
+  > (a) Scaffold the docs first, then bundle them.
+  > (b) Bundle whatever markdown is at the root (likely just the README, if any).
+  > (c) Cancel."
+  Default recommendation: **(a)**.
+
+  - If **(a)**: run the full scaffold sub-workflow first (A.1 → A.4: detect stack → detect tier → audit → confirm → write). Once the user approves and files are written, continue with C.1 below.
+  - If **(b)**: skip directly to C.1 and include a note at the top of the bundle: "> This project has no canonical documentation yet. Bundle generated from discoverable markdown at the root."
+  - If **(c)**: stop. No output.
+
+- **Partial canonical docs exist** → continue with C.1. In the final report (C.6), list which canonical files are missing so the user knows what they can fill in with `/documentation-scaffold`.
+
+- **All canonical docs exist** → continue with C.1 normally.
 
 **C.1. Discover doc files in canonical order**
 

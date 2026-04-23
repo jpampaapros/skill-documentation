@@ -20,13 +20,15 @@ narrative markdown convention that agents and humans can onboard from.
 
 ## Operations
 
-| Operation | Goal | Trigger phrases |
-|-----------|------|-----------------|
-| **scaffold** (default) | Create missing docs from templates. | "document the project", "scaffold docs", "documentar" |
-| **update** | Re-audit existing docs vs current code, apply section-level fixes. | "update docs", "actualizar documentación", "refresh docs" |
-| **bundle** | Concatenate all docs into one self-contained `.md`. | "bundle docs", "generar documentación general", "consolidar docs" |
+Each operation has its own explicit slash command. Prefer these over inferring intent.
 
-Detect the operation from the user's phrasing. When ambiguous, ask.
+| Operation | Slash command | Goal |
+|-----------|---------------|------|
+| **scaffold** | `/documentation-scaffold` | Create missing docs from templates. |
+| **update** | `/documentation-update` | Re-audit existing docs vs current code, apply section-level fixes. Never creates new files. |
+| **bundle** | `/documentation-bundle` | Concatenate all docs into one self-contained `.md`. If no docs exist, offers to scaffold first. |
+
+If the user asks in natural language ("documentá el proyecto", "actualizar docs", "generar documentación general"), infer the operation. When ambiguous, ask.
 
 ## Tiers
 

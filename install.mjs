@@ -56,24 +56,38 @@ console.log('');
 
 const actions = [];
 
+const OPERATION_COMMANDS = ['documentation-scaffold', 'documentation-update', 'documentation-bundle'];
+
 function queueClaudeCode() {
-  const destDir = join(TARGET, '.claude', 'skills', 'documentation');
+  const skillDir = join(TARGET, '.claude', 'skills', 'documentation');
+  const commandsDir = join(TARGET, '.claude', 'commands');
+
   actions.push({
-    label: 'Claude Code',
-    dest: destDir,
+    label: 'Claude Code (skill)',
+    dest: skillDir,
     op: () => {
-      mkdirSync(destDir, { recursive: true });
-      cpSync(join(SOURCE, 'SKILL.md'), join(destDir, 'SKILL.md'));
-      cpSync(join(SOURCE, 'assets'), join(destDir, 'assets'), { recursive: true });
+      mkdirSync(skillDir, { recursive: true });
+      cpSync(join(SOURCE, 'SKILL.md'), join(skillDir, 'SKILL.md'));
+      cpSync(join(SOURCE, 'assets'), join(skillDir, 'assets'), { recursive: true });
     },
   });
+  for (const cmd of OPERATION_COMMANDS) {
+    const dest = join(commandsDir, `${cmd}.md`);
+    actions.push({
+      label: `Claude Code (/${cmd.replace('documentation-', '')})`,
+      dest,
+      op: () => {
+        mkdirSync(commandsDir, { recursive: true });
+        cpSync(join(SOURCE, 'adapters', 'claude-code', `${cmd}.command.md`), dest);
+      },
+    });
+  }
 }
 
 function queueCursor() {
   const rulesDir = join(TARGET, '.cursor', 'rules');
   const rulesDest = join(rulesDir, 'documentation.mdc');
   const commandsDir = join(TARGET, '.cursor', 'commands');
-  const commandsDest = join(commandsDir, 'documentation.md');
 
   actions.push({
     label: 'Cursor (rule)',
@@ -83,14 +97,17 @@ function queueCursor() {
       cpSync(join(SOURCE, 'adapters', 'cursor', 'documentation.mdc'), rulesDest);
     },
   });
-  actions.push({
-    label: 'Cursor (/cmd)',
-    dest: commandsDest,
-    op: () => {
-      mkdirSync(commandsDir, { recursive: true });
-      cpSync(join(SOURCE, 'adapters', 'cursor', 'documentation.command.md'), commandsDest);
-    },
-  });
+  for (const cmd of OPERATION_COMMANDS) {
+    const dest = join(commandsDir, `${cmd}.md`);
+    actions.push({
+      label: `Cursor (/${cmd.replace('documentation-', '')})`,
+      dest,
+      op: () => {
+        mkdirSync(commandsDir, { recursive: true });
+        cpSync(join(SOURCE, 'adapters', 'cursor', `${cmd}.command.md`), dest);
+      },
+    });
+  }
 }
 
 function queueCodex() {
@@ -133,7 +150,7 @@ for (const t of selected) {
 }
 
 for (const a of actions) {
-  console.log(`  ${a.label.padEnd(14)} -> ${a.dest}`);
+  console.log(`  ${a.label.padEnd(24)} -> ${a.dest}`);
   if (!dryRun) a.op();
 }
 

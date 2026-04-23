@@ -9,9 +9,14 @@ docs into a single `.md`).
 
 ### Operations
 
+In Claude Code and Cursor each operation has its own explicit slash command
+(`/documentation-scaffold`, `/documentation-update`, `/documentation-bundle`).
+Codex does not have literal slash commands, so trigger each operation in
+natural language instead:
+
 | Operation | Trigger phrases |
 |-----------|-----------------|
-| **scaffold** (default) | "document the project", "scaffold docs", "documentar el proyecto" |
+| **scaffold** | "document the project", "scaffold docs", "documentar el proyecto" |
 | **update** | "update docs", "actualizar documentación", "refresh documentation" |
 | **bundle** | "bundle docs", "generar documentación general", "consolidar docs" |
 
