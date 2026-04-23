@@ -1,0 +1,64 @@
+---
+description: Documents a project using the gentleman-programming convention — README, CLAUDE, ARCHITECTURE, PLANS, SUBAGENTS, docs/references. Invoke when the user asks to document a project, scaffold docs, or update existing documentation.
+globs:
+alwaysApply: false
+---
+
+# documentation
+
+Generates and maintains consistent project documentation following a narrative
+markdown convention that agents and humans can onboard from.
+
+## When to Use
+
+- User asks to document a project, scaffold docs, or add a README.
+- Project lacks agent-facing context files (CLAUDE.md, SUBAGENTS.md).
+- Architecture decisions or roadmap are undocumented.
+- A new developer or agent is onboarding and the codebase has no narrative.
+
+## Canonical file set
+
+| File | Purpose | Required |
+|------|---------|----------|
+| `README.md` | Entry point: what the project is, how to run it | Yes |
+| `CLAUDE.md` | Agent conventions, stack, dos and donts | Yes |
+| `ARCHITECTURE.md` | Domain, layers, data flow, key decisions | Yes |
+| `PLANS.md` | Roadmap: now, next, later, done | Yes |
+| `SUBAGENTS.md` | Delegation patterns, hooks, sub-agent triggers | Recommended |
+| `docs/references/*.md` | Deep dives, one file per topic | As needed |
+
+## Rules
+
+1. **Narrative over hidden rules.** Markdown at the root beats opaque config.
+2. **One concern per file.** Architecture, roadmap, and conventions never mix.
+3. **Short root files, deep references.** Root files under ~200 lines.
+4. **Detect first, then write.** Read manifests before filling templates.
+5. **Update in place.** Diff before overwriting. Never silent overwrites.
+6. **Commit-friendly.** Every file must be diffable and stable.
+
+## Workflow
+
+1. **Detect stack** — read `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `Gemfile`, `composer.json`. Extract project name, framework, and scripts.
+2. **Audit existing docs** — for each canonical file: missing → create; exists → diff against template; out of convention → propose migration.
+3. **Apply templates** — fill `{{PROJECT_NAME}}`, `{{STACK}}`, `{{RUN_COMMAND}}`, `{{TEST_COMMAND}}`, etc. Templates live in `.claude/skills/documentation/assets/templates/` after install.
+4. **Confirm** — present files to create, files to update (with diff summary), and detected values. Wait for GO.
+5. **Write atomically** — new files via Write, existing via Edit. Never batch-overwrite.
+
+## Output layout
+
+```
+project/
+├── README.md
+├── CLAUDE.md
+├── ARCHITECTURE.md
+├── PLANS.md
+├── SUBAGENTS.md
+└── docs/references/*.md
+```
+
+## Placeholders
+
+`{{PROJECT_NAME}}`, `{{DESCRIPTION}}`, `{{LANGUAGE}}`, `{{FRAMEWORK}}`,
+`{{PACKAGE_MANAGER}}`, `{{TEST_RUNNER}}`, `{{INSTALL_COMMAND}}`,
+`{{RUN_COMMAND}}`, `{{TEST_COMMAND}}`, `{{BUILD_COMMAND}}`,
+`{{LINT_COMMAND}}`, `{{LICENSE}}`.
