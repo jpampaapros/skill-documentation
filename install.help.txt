@@ -1,0 +1,18 @@
+documentation skill — installer
+
+Usage (from the target project root):
+  node <path-to-skill>/install.mjs [options]
+
+Options:
+  --target=claude-code   Install only the Claude Code skill (.claude/skills/documentation/)
+  --target=cursor        Install only the Cursor rule (.cursor/rules/documentation.mdc)
+  --target=codex         Install only the Codex snippet (AGENTS.md at project root)
+  --target=all           Install all three (default)
+  --dry-run              Show what would be written without writing anything
+  --help, -h             Show this help message
+
+Examples:
+  cd ~/projects/my-app
+  node ~/skills/documentation/install.mjs
+  node ~/skills/documentation/install.mjs --target=cursor
+  node ~/skills/documentation/install.mjs --dry-run
